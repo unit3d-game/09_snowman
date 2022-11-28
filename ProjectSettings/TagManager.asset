@@ -6,18 +6,21 @@ TagManager:
   tags:
   - Ground
   - Stair
+  - Ball
+  - Enemy
+  - Bullet
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
+  - UnformedBall
+  - Enemy
+  - Boss
+  - RollingBall
+  - Invincibility
   - 
   - 
   - 
