@@ -13,8 +13,22 @@ public partial class Const
         // 无敌角色
         public const string Invincibility = "Invincibility";
 
+        // 用户
         public const string Player = "Player";
 
+        // boss 掉下来的图层
+        public const string BossDown = "BossDown";
+
+        public const string Boss = "Boss";
+
+        public const string Enemy = "Enemy";
+
+
+        public const string Floor = "Floor";
+
+        public const string Stair = "Stair";
+
+        public const string Default = "Default";
     }
 }
 

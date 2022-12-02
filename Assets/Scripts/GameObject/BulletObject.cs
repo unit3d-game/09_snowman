@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using MyUtils;
 
 public class BulletObject : MonoBehaviour
 {
@@ -29,7 +30,7 @@ public class BulletObject : MonoBehaviour
     private void Awake()
     {
         rbody = GetComponent<Rigidbody2D>();
-        GameObject player = GameObject.Find("Player");
+        GameObject player = GameObject.Find(Const.ObjectName.Player);
         speed = player.GetComponent<BulletControl>().Speed;
         firePoint = player.transform.Find("FirePoint");
         isLeft = player.transform.localScale.x > 0;
@@ -73,6 +74,12 @@ public class BulletObject : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // 如果是碰到 boss
+        if (collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.Boss) || collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.BossDown))
+        {
+            PostNotification.Post<int>(Const.Event.BossAttacked, this, 10);
+            PostNotification.Post<int>(Const.Event.IncrementScore, this, 10);
+        }
         // 无论碰到谁，都销毁
         Destroy(gameObject);
     }

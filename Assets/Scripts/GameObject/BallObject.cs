@@ -47,8 +47,12 @@ public class BallObject : MonoBehaviour
 
     private GameObject player;
 
+    private Transform playerFoot;
+
     private PlatformEffector2D platformEffector2D;
 
+
+    private bool isDestroyed = false;
 
     private void Awake()
     {
@@ -59,6 +63,8 @@ public class BallObject : MonoBehaviour
         babyEnemyPrefab = GameObject.Find(Const.ObjectName.Boss).GetComponent<BossObject>().EnemyPrefab;
         aiWalkObject = GetComponent<AiWalkObject>();
         player = GameObject.Find("Player");
+        playerFoot = player.transform.Find("Foot");
+
     }
 
     void Update()
@@ -66,13 +72,14 @@ public class BallObject : MonoBehaviour
         // 是否需要复活成小怪兽
         toBabyEnemy();
         DoAttack();
+        checkCollisionBoss();
     }
 
     // 复活小怪兽
     private void toBabyEnemy()
     {
         // 如果是在推动或者滚动状态下，则倒计时关闭
-        if (isPushing || isRolling)
+        if (isPushing || isRolling || isDestroyed)
         {
             return;
         }
@@ -89,7 +96,7 @@ public class BallObject : MonoBehaviour
             // 产生一个新的小怪兽
             GameObject enemy = Instantiate(babyEnemyPrefab, transform.position, transform.rotation, transform.parent);
 
-
+            isDestroyed = true;
 
             // 销毁当前雪球
             Destroy(gameObject);
@@ -126,14 +133,13 @@ public class BallObject : MonoBehaviour
         isRollingSetter.Set(false);
     }
 
-
     /**
      * <summary>攻击雪球</summary>
      * <returns>是否设置成功</returns>
      */
     private void DoAttack()
     {
-        if (!isPushing || isRolling)
+        if (!IsActive() || isRolling)
         {
             return;
         }
@@ -142,9 +148,14 @@ public class BallObject : MonoBehaviour
         {
             return;
         }
+        if (!isPushing && !SnowUtils.IsCollision(playerFoot, 0.1f, Const.Layer.Default))
+        {
+            return;
+        }
         isRolling = true;
         aiWalkObject.DoStart(RollSpeed, player.transform.localScale.x > 0);
         gameObject.layer = LayerMask.NameToLayer(Const.Layer.RollingBall);
+        PostNotification.Post<Vector3>(Const.Event.Invinsible, this, transform.position);
     }
 
     /**
@@ -156,7 +167,6 @@ public class BallObject : MonoBehaviour
         hpSetter.Set(hp - 1);
         // 重置时长
         currentCountdown = 0;
-        Debug.Log($"set hp is {mhp}");
         // 如果是1、2 则让其不可触碰
         if (hp < MAX_HP)
         {
@@ -176,6 +186,34 @@ public class BallObject : MonoBehaviour
         if (collision.tag == Const.Tag.Bullet && !IsActive())
         {
             setHp(hp + 1);
+        }
+    }
+
+    private void checkCollisionBoss()
+    {
+        if (isDestroyed)
+        {
+            return;
+        }
+        // 如果是碰到boss
+        if (SnowUtils.IsCollision(transform, 0.1f, Const.Layer.Boss, Const.Layer.BossDown))
+        {
+            isDestroyed = true;
+            Destroy(gameObject);
+            // 碰到到boss 分
+            PostNotification.Post<int>(Const.Event.IncrementScore, this, 200);
+            PostNotification.Post<int>(Const.Event.BossAttacked, this, 200);
+        }
+    }
+
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == Const.Tag.Ball)
+        {
+            // 碰到其他雪球 80 分
+            PostNotification.Post<int>(Const.Event.IncrementScore, this, 80);
+            Destroy(gameObject);
         }
     }
 }

@@ -5,7 +5,7 @@ using MyUtils;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-public class PlayerControl : MonoBehaviour
+public class PlayerControl : BaseNotificationBehaviour
 {
 
     private static readonly Color[] InvinsibleColors = ArrayUtils.As<Color>(Color.cyan, Color.blue, Color.red, Color.yellow, Color.white);
@@ -52,8 +52,9 @@ public class PlayerControl : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
 
-    private void Awake()
+    public override void Awake()
     {
+        base.Awake();
         Animator animator = GetComponent<Animator>();
         isJumpTrigger = new AnimTrigger(animator, "Jump");
         isGroundSetter = new AnimSetter<bool>(animator, "IsGround");
@@ -78,6 +79,8 @@ public class PlayerControl : MonoBehaviour
         isFireTrigger.Trigger();
     }
 
+
+
     private void Update()
     {
         if (!isStarted)
@@ -98,6 +101,7 @@ public class PlayerControl : MonoBehaviour
     public void DoStart()
     {
         isStarted = true;
+        isGround = true;
     }
 
     // 处理无敌状态
@@ -135,13 +139,17 @@ public class PlayerControl : MonoBehaviour
         {
             return false;
         }
-
+        Debug.Log($"IsGround is {isGround}");
         rbody.AddForce(Vector2.up * 300);
         isJumpTrigger.Trigger();
         isGround = false;
         return true;
     }
 
+    private void FixedUpdate()
+    {
+        SetGround();
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -179,7 +187,7 @@ public class PlayerControl : MonoBehaviour
 
     void SetGround()
     {
-        isGround = SnowUtils.IsCollision(footPosition, 0.25f, "Player", "Invincibility");// Physics2D.OverlapCircle(footPosition.position, 0.23f, ~LayerMask.GetMask("Player", "Invincibility"));
+        isGround = SnowUtils.IsCollision(footPosition, 0.1f, Const.Layer.Floor, Const.Layer.Stair);
     }
 
     private void OnCollisionStay2D(Collision2D collision)
@@ -187,8 +195,9 @@ public class PlayerControl : MonoBehaviour
         // 如果是雪球，则改变状态为push
         if (isMoving && collision.gameObject.tag == Const.Tag.Ball)
         {
+            Physics2D.Raycast(pushPosition.position, Vector2.right);
             // 再检查是否在范围内
-            if (SnowUtils.IsCollision(pushPosition, 0.1f, "Player"))
+            if (SnowUtils.IsCollision(pushPosition.position, collision.gameObject.transform.position, 0.45f))
             {
                 pushBall = collision.gameObject;
                 pushBall.GetComponent<BallObject>().DoStartPush();
@@ -207,8 +216,6 @@ public class PlayerControl : MonoBehaviour
             {
                 pushBall.GetComponent<BallObject>().DoEndPush();
                 pushBall = null;
-                // 开启无敌状态
-                invinsibleTime = InvinsibleDuration;
             }
             return;
         }
@@ -233,8 +240,23 @@ public class PlayerControl : MonoBehaviour
                 //关闭 rbody 和 碰撞
                 Destroy(rbody);
                 Destroy(GetComponent<CapsuleCollider2D>());
+                PostNotification.Post(Const.Event.PlayerDied, this);
             }
             return;
+        }
+    }
+
+    [Subscribe(Const.Event.Invinsible)]
+    public void OnToInvisible(MessagePayload<Vector3> ballPos)
+    {
+        if (SnowUtils.IsCollision(ballPos.data, 0.1f, Const.Layer.Player))
+        {
+            invinsibleTime = InvinsibleDuration;
+        }
+        else
+        {
+
+            Debug.Log("我不是无敌状态");
         }
     }
 

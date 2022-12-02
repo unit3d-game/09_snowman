@@ -8,6 +8,9 @@ public partial class Const
          */
         public const string Boss = "Boss";
 
+
+        public const string Player = "Player";
+
     }
 }
 

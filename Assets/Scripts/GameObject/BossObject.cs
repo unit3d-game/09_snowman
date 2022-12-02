@@ -14,29 +14,36 @@ public class BossObject : BaseNotificationBehaviour
     /// <summary>
     /// 最小重力加速度
     /// </summary>
-    public int MinForce = 300;
+    public int MinForce = 100;
 
     /// <summary>
     /// 最大重力加速度
     /// </summary>
-    public int MaxForce = 600;
+    public int MaxForce = 200;
 
     /// <summary>
     /// 最小怪兽速度
     /// </summary>
-    public int MinSpeed = 1;
+    public float MinSpeed = 0.5f;
 
     /// <summary>
     /// 最大怪兽速度
     /// </summary>
-    public int MaxSpeed = 3;
+    public float MaxSpeed = 1f;
 
     /// <summary>
     /// 大跳的比率
     /// </summary>
-    public int BigJumpPre = 30;
+    public int BigJumpPrecent = 30;
 
-    private float stairPosY = 1;
+    /// <summary>
+    /// 延迟初始化时间
+    /// </summary>
+    public float DelayedInitTime = 5;
+
+    private const float stairPosY = 1;
+
+
 
     private float nextCreateTime = 0;
 
@@ -62,21 +69,18 @@ public class BossObject : BaseNotificationBehaviour
     private float nextJumpTime;
 
 
+    private Rigidbody2D rbody;
 
 
 
-    // Use this for initialization
-    //void Start()
-    //{
-    //    nextCreateTime = FireDuration;
-    //}
+
     public override void Awake()
     {
         base.Awake();
 
         firePosition = transform.Find("FirePoint");
         footPosition = transform.Find("Foot");
-
+        rbody = GetComponent<Rigidbody2D>();
         Animator animator = GetComponent<Animator>();
         isDeadSetter = new AnimSetter<bool>(animator, "Dead");
         isGroundSetter = new AnimSetter<bool>(animator, "IsGround");
@@ -84,16 +88,23 @@ public class BossObject : BaseNotificationBehaviour
         isBigJumpTrigger = new AnimTrigger(animator, "BigJump");
     }
 
+
+
     // Update is called once per frame
     void Update()
     {
+        if (DelayedInitTime > 0)
+        {
+            DelayedInitTime -= Time.deltaTime;
+            return;
+        }
         setGround();
         createEnemy();
     }
 
     private void setGround()
     {
-        isGround = SnowUtils.IsCollision(footPosition, 0.2f, "Boss");
+
         bool isSync = !(isGround ^ isGroundSetter.Get());
         // 以同步状态，则开始倒计时
         if (isSync)
@@ -106,19 +117,35 @@ public class BossObject : BaseNotificationBehaviour
             }
             return;
         }
-        if (isGround)
-        {
-            isGroundSetter.Set(true);
-        }
-        else
-        {
-            isGroundSetter.Set(false);
-        }
     }
 
     private void toJump()
     {
-        // 随机
+        // 随机大跳和小跳
+        // 如果是随机大跳
+        if (RandomUtils.isWithinRatioOfPrecent(BigJumpPrecent))
+        {
+            bool isUp = transform.position.y < stairPosY;
+            if (isUp)
+            {
+                rbody.AddForce(Vector2.up * 500);
+            }
+            else
+            {
+                // 掉下来
+                gameObject.layer = LayerMask.NameToLayer(Const.Layer.BossDown);
+            }
+            isGroundSetter.Set(false);
+            isBigJumpTrigger.Trigger();
+        }
+        else
+        {
+            rbody.AddForce(Vector2.up * 200);
+            isGroundSetter.Set(false);
+            isJumpTrigger.Trigger();
+        }
+        // 重新充值下一次跳跃时间
+        nextJumpTime = Random.Range(2f, 6f);
     }
 
     private void createEnemy()
@@ -130,6 +157,26 @@ public class BossObject : BaseNotificationBehaviour
         }
         GameObject enemy = Instantiate(EnemyPrefab, firePosition.transform.position, transform.rotation);
         enemy.GetComponent<BabyEnemyObject>().DoStart(Random.Range(MinForce, MaxForce), Random.Range(MinSpeed, MaxSpeed));
-        nextCreateTime = Random.Range(1, 8);
+        nextCreateTime = Random.Range(5f, 15f);
     }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == Const.Tag.Ground || collision.gameObject.tag == Const.Tag.Stair)
+        {
+            gameObject.layer = LayerMask.NameToLayer(Const.Layer.Boss);
+            isGround = true;
+            isGroundSetter.Set(true);
+        }
+    }
+
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == Const.Tag.Ground)
+        {
+            isGround = false;
+            isGroundSetter.Set(false);
+        }
+    }
+
 }

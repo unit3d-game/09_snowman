@@ -47,15 +47,15 @@ public class BabyEnemyObject : BaseNotificationBehaviour
 
     }
 
-    public void DoStart(int mspeed)
+    public void DoStart(float mspeed)
     {
         Speed = mspeed;
     }
 
-    public void DoStart(int force, int mspeed)
+    public void DoStart(int force, float mspeed)
     {
         Speed = mspeed;
-        rbody.AddForce(Vector3.left * force);
+        rbody.AddForce(new Vector2(-1, UnityEngine.Random.Range(0, 1f)) * force);
     }
 
     private void Update()
@@ -66,7 +66,7 @@ public class BabyEnemyObject : BaseNotificationBehaviour
 
     private void setGround()
     {
-        isGround = SnowUtils.IsCollision(footPosition, 0.2f, "Enemy");
+        isGround = SnowUtils.IsCollision(footPosition, 0.2f, Const.Layer.Enemy);
     }
 
     private void toWalk()
@@ -104,8 +104,6 @@ public class BabyEnemyObject : BaseNotificationBehaviour
     }
     private void toBall()
     {
-        // 触发一个小怪兽死亡事件
-        PostNotification.Post(Const.Event.EnemyDied, this);
         Instantiate(BallPrefab, transform.position, transform.rotation, transform.parent);
         Destroy(gameObject);
     }
@@ -116,6 +114,16 @@ public class BabyEnemyObject : BaseNotificationBehaviour
         if (collision.tag == Const.Tag.Bullet)
         {
             toBall();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == Const.Tag.Ball)
+        {
+            Debug.Log($"Enemy to ball.");
+            PostNotification.Post<int>(Const.Event.IncrementScore, this, 100);
+            Destroy(gameObject);
         }
     }
 

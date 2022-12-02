@@ -173,7 +173,7 @@ PlatformEffector2D:
   m_UseColliderMask: 1
   m_ColliderMask:
     serializedVersion: 2
-    m_Bits: 575
+    m_Bits: 12863
   m_RotationalOffset: 0
   m_UseOneWay: 0
   m_UseOneWayGrouping: 0
