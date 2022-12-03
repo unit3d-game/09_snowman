@@ -1,4 +1,5 @@
 ﻿using System;
+using MyUtils;
 using UnityEngine;
 
 public class SnowUtils
@@ -44,6 +45,42 @@ public class SnowUtils
     public static bool IsCollision(Vector3 pos1, Vector3 pos2, float minDis)
     {
         return Vector3.Distance(pos1, pos2) <= minDis;
+    }
+
+    /// <summary>
+    /// 获取碰撞体
+    /// </summary>
+    /// <param name="pos">检测开始</param>
+    /// <param name="direct">检测的方向</param>
+    /// <param name="radius">检测的范围</param>
+    /// <param name="layerNames">图层</param>
+    /// <returns>碰撞体</returns>
+    public static Optional<Collider2D> GetCollider(Vector2 pos, Vector2 direct, float radius, params string[] layerNames)
+    {
+        RaycastHit2D raycast = Physics2D.Raycast(pos, direct, radius, LayerMask.GetMask(layerNames));
+        if (raycast.collider == null)
+        {
+            return Optional<Collider2D>.OfNullable();
+        }
+
+        return Optional<Collider2D>.Of(raycast.collider);
+    }
+
+    /// <summary>
+    /// 是否
+    /// </summary>
+    /// <param name="pos">起始坐标</param>
+    /// <param name="direct">检测方向</param>
+    /// <param name="radius">范围</param>
+    /// <param name="doAction">执行的动作</param>
+    /// <param name="layerNames">碰撞层</param>
+    public static void DoCollision(Vector2 pos, Vector2 direct, float radius, Action<Collider2D> doAction, params string[] layerNames)
+    {
+        Optional<Collider2D> optional = GetCollider(pos, direct, radius, layerNames);
+        if (optional.IsPresent())
+        {
+            doAction(optional.Get());
+        }
     }
 }
 

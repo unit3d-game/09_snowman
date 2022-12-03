@@ -74,10 +74,16 @@ public class BulletObject : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // 如果是 sweet 则忽略
+        if (collision.tag == Const.Tag.Sweet)
+        {
+            return;
+        }
+
         // 如果是碰到 boss
         if (collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.Boss) || collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.BossDown))
         {
-            PostNotification.Post<int>(Const.Event.BossAttacked, this, 10);
+            PostNotification.Post<int>(Const.Event.BossAttacked, this, ~10);
             PostNotification.Post<int>(Const.Event.IncrementScore, this, 10);
         }
         // 无论碰到谁，都销毁

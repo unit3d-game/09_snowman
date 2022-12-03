@@ -72,8 +72,6 @@ public class BossObject : BaseNotificationBehaviour
     private Rigidbody2D rbody;
 
 
-
-
     public override void Awake()
     {
         base.Awake();
@@ -87,8 +85,6 @@ public class BossObject : BaseNotificationBehaviour
         isJumpTrigger = new AnimTrigger(animator, "Jump");
         isBigJumpTrigger = new AnimTrigger(animator, "BigJump");
     }
-
-
 
     // Update is called once per frame
     void Update()
@@ -159,6 +155,8 @@ public class BossObject : BaseNotificationBehaviour
         enemy.GetComponent<BabyEnemyObject>().DoStart(Random.Range(MinForce, MaxForce), Random.Range(MinSpeed, MaxSpeed));
         nextCreateTime = Random.Range(5f, 15f);
     }
+
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == Const.Tag.Ground || collision.gameObject.tag == Const.Tag.Stair)

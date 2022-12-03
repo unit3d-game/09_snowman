@@ -16,6 +16,10 @@ public class BabyEnemyObject : BaseNotificationBehaviour
      */
     public float Speed = 3;
 
+    /// <summary>
+    /// 糖果预制体
+    /// </summary>
+    public GameObject SweetPrefab;
 
     // 移动动画设置
     private AnimSetter<bool> isMoveSetter;
@@ -44,7 +48,6 @@ public class BabyEnemyObject : BaseNotificationBehaviour
         isGroundSetter = new AnimSetter<bool>(animator, "IsGround");
         speedSetter = new AnimSetter<float>(animator, "Speed");
         footPosition = transform.Find("Foot");
-
     }
 
     public void DoStart(float mspeed)
@@ -66,7 +69,7 @@ public class BabyEnemyObject : BaseNotificationBehaviour
 
     private void setGround()
     {
-        isGround = SnowUtils.IsCollision(footPosition, 0.2f, Const.Layer.Enemy);
+        isGround = SnowUtils.IsCollision(footPosition, 0.1f, Const.Layer.Stair, Const.Layer.Floor);
     }
 
     private void toWalk()
@@ -102,6 +105,17 @@ public class BabyEnemyObject : BaseNotificationBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 死亡
+    /// </summary>
+    public void DoDeath()
+    {
+        // 开始
+        Instantiate(SweetPrefab, transform.position, transform.rotation, transform.parent);
+        Destroy(gameObject);
+    }
+
     private void toBall()
     {
         Instantiate(BallPrefab, transform.position, transform.rotation, transform.parent);
@@ -117,15 +131,23 @@ public class BabyEnemyObject : BaseNotificationBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.tag == Const.Tag.Ball)
-        {
-            Debug.Log($"Enemy to ball.");
-            PostNotification.Post<int>(Const.Event.IncrementScore, this, 100);
-            Destroy(gameObject);
-        }
-    }
+
+
+    //private void OnCollisionEnter2D(Collision2D collision)
+    //{
+    //    if (collision.gameObject.tag == Const.Tag.Ball)
+    //    {
+    //        // 检查是否是 rolling 状态
+    //        BallObject ball = collision.gameObject.GetComponent<BallObject>();
+    //        if (!ball.isRolling)
+    //        {
+    //            return;
+    //        }
+    //        // 开始
+    //        Instantiate(SweetPrefab, transform.position, transform.rotation, transform.parent);
+    //        Destroy(gameObject);
+    //    }
+    //}
 
 }
 

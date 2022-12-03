@@ -38,7 +38,7 @@ public class BallObject : MonoBehaviour
     private bool isPushing = false;
 
     // 是否是滚动状态
-    private bool isRolling = false;
+    public bool isRolling { private set; get; } = false;
 
 
     private GameObject babyEnemyPrefab;
@@ -72,7 +72,12 @@ public class BallObject : MonoBehaviour
         // 是否需要复活成小怪兽
         toBabyEnemy();
         DoAttack();
+    }
+
+    private void FixedUpdate()
+    {
         checkCollisionBoss();
+        checkCollisionEnemy();
     }
 
     // 复活小怪兽
@@ -103,11 +108,13 @@ public class BallObject : MonoBehaviour
         }
     }
 
+
     // 是否是激活状态，即可以推动
     public bool IsActive()
     {
         return hp == MAX_HP;
     }
+
 
 
     /**
@@ -205,7 +212,25 @@ public class BallObject : MonoBehaviour
             PostNotification.Post<int>(Const.Event.BossAttacked, this, 200);
         }
     }
+    /// <summary>
+    /// 检查有没有敌人
+    /// </summary>
+    private void checkCollisionEnemy()
+    {
+        if (isDestroyed || !isRolling)
+        {
+            return;
+        }
+        SnowUtils.DoCollision(transform.position, -transform.localScale, 0.2f, collider =>
+        {
+            // 如果碰撞到了，则直接销毁
+            BabyEnemyObject baby = collider.gameObject.GetComponent<BabyEnemyObject>();
+            baby.DoDeath();
+            isDestroyed = true;
+            Destroy(gameObject);
+        }, Const.Layer.Enemy);
 
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {

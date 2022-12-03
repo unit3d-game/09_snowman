@@ -16,6 +16,7 @@ public partial class Const
 
         public const string Enemy = "Enemy";
 
+        public const string Sweet = "Sweet";
     }
 }
 
