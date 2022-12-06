@@ -32,8 +32,10 @@ public class SnowUtils
      */
     public static bool IsCollision(Vector3 position, float radius, params string[] layerNames)
     {
+
         return Physics2D.OverlapCircle(position, radius, LayerMask.GetMask(layerNames));
     }
+
 
     /// <summary>
     /// 检测两个点的距离或者说是碰撞
@@ -81,6 +83,18 @@ public class SnowUtils
         {
             doAction(optional.Get());
         }
+    }
+
+    /// <summary>
+    ///  根据频幕大小对物体宽高进行缩放
+    /// </summary>
+    /// <param name="origin">原始宽高,x 宽, y 高</param>
+    /// <returns>缩放后的宽高</returns>
+    public static Vector2 ScaleWithScreen(Vector2 origin)
+    {
+        float ratio = UnityEngine.Screen.width / Const.Screen.Width;
+        // 开始缩放
+        return new Vector2(origin.x * ratio, origin.y * ratio);
     }
 }
 

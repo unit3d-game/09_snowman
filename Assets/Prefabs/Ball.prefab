@@ -143,7 +143,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5aa2d5ed9ef56466ea60d1d7d72004ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HpDuration: 5
+  HpDuration: 10
+  Waters:
+  - {fileID: 8550048695186124152, guid: 2860d826af7a7485da3e4f9141c44d77, type: 3}
+  - {fileID: 56950976361144201, guid: f8e6634339b4b4375ba8692873a42425, type: 3}
+  - {fileID: 7786020012167046970, guid: 0ecab8092883f4c74a4717cdf658e1de, type: 3}
+  - {fileID: 8834664537874763211, guid: 467952ad0809b4a3b884285130b19a04, type: 3}
   RollSpeed: 6
 --- !u!114 &-1564386566240277531
 MonoBehaviour:

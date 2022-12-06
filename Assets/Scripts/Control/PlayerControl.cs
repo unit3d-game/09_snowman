@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using MyUtils;
-using UnityEditor.SceneManagement;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerControl : BaseNotificationBehaviour
@@ -49,6 +49,10 @@ public class PlayerControl : BaseNotificationBehaviour
 
     private bool isStarted = false;
 
+    /// <summary>
+    /// 速度提升的剩余时间
+    /// </summary>
+    private float upSpeedDuration = 0;
 
     private SpriteRenderer spriteRenderer;
 
@@ -73,12 +77,10 @@ public class PlayerControl : BaseNotificationBehaviour
     }
 
 
-
     public void DoShoot()
     {
         isFireTrigger.Trigger();
     }
-
 
 
     private void Update()
@@ -117,8 +119,7 @@ public class PlayerControl : BaseNotificationBehaviour
         //如果结束无敌状态则设置成白色
         if (invinsibleTime == 0)
         {
-            spriteRenderer.color = Color.white;
-            gameObject.layer = LayerMask.NameToLayer(Const.Layer.Player);
+            PostNotification.Post(Const.Event.ClearPlayerEffect, this);
         }
         else
         {
@@ -135,11 +136,10 @@ public class PlayerControl : BaseNotificationBehaviour
     /// <returns></returns>
     private bool toJump()
     {
-        if (!Input.GetKeyDown(KeyCode.J) || !isGround)
+        if (!Input.GetKeyDown(KeyCode.J) || !isGround || rbody.IsDestroyed())
         {
             return false;
         }
-        Debug.Log($"IsGround is {isGround}");
         rbody.AddForce(Vector2.up * 300);
         isJumpTrigger.Trigger();
         isGround = false;
@@ -151,10 +151,45 @@ public class PlayerControl : BaseNotificationBehaviour
         SetGround();
     }
 
+    private void clearWatterEffect()
+    {
+
+        upSpeedDuration = 0;
+        invinsibleTime = 0;
+        GetComponent<BulletControl>().ClearWatterEffect();
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log($"Coll trigger is {collision.tag}");
+        // 检查是否是药水
+        if (collision.tag == Const.Tag.Water)
+        {
+
+            // 清空之前的
+            clearWatterEffect();
+            WaterObject water = collision.gameObject.GetComponent<WaterObject>();
+            switch (water.WaterType)
+            {
+                case WaterType.Blue:
+                    spriteRenderer.color = Color.blue;
+                    PostNotification.Post<WaterType>(Const.Event.DrinkWater, this, water.WaterType);
+                    break;
+                case WaterType.Yellow:
+                    spriteRenderer.color = Color.yellow;
+                    PostNotification.Post<WaterType>(Const.Event.DrinkWater, this, water.WaterType);
+                    break;
+                case WaterType.Red:
+                    spriteRenderer.color = Color.red;
+                    upSpeedDuration = 30;
+                    break;
+                default:
+                    invinsibleTime = InvinsibleDuration * 2;
+                    break;
+            }
+            Destroy(collision.gameObject);
+        }
     }
+
 
     private void toWalk()
     {
@@ -172,7 +207,20 @@ public class PlayerControl : BaseNotificationBehaviour
         // 来个旋转
         Vector3 pos = transform.position;
         // 如果在空中，则移动速度降低为0.5
-        pos.x += hor * (isGround ? 2 : 0.5f) * Time.deltaTime;
+        if (upSpeedDuration > 0)
+        {
+            pos.x += hor * (isGround ? 2 : 0.5f) * Time.deltaTime;
+            upSpeedDuration -= Time.deltaTime;
+            if (upSpeedDuration <= 0)
+            {
+                upSpeedDuration = 0;
+                PostNotification.Post(Const.Event.ClearPlayerEffect, this);
+            }
+        }
+        else
+        {
+            pos.x += hor * (isGround ? 2 : 0.5f) * Time.deltaTime;
+        }
         transform.position = pos;
         if (hor < 0)
         {
@@ -182,6 +230,13 @@ public class PlayerControl : BaseNotificationBehaviour
         {
             transform.localScale = new Vector3(-1, 1, 1);
         }
+    }
+
+    [Subscribe(Const.Event.ClearPlayerEffect)]
+    public void OnClearPlayerEffect()
+    {
+        spriteRenderer.color = Color.white;
+        gameObject.layer = LayerMask.NameToLayer(Const.Layer.Player);
     }
 
 
@@ -235,15 +290,32 @@ public class PlayerControl : BaseNotificationBehaviour
         {
             if (!isDied)
             {
+                clearWatterEffect();
                 isDied = true;
                 isDeadTrigger.Trigger();
                 //关闭 rbody 和 碰撞
-                Destroy(rbody);
-                Destroy(GetComponent<CapsuleCollider2D>());
+                toDead();
                 PostNotification.Post(Const.Event.PlayerDied, this);
             }
             return;
         }
+    }
+
+    private void toDead()
+    {
+        GetComponent<CapsuleCollider2D>().enabled = false;
+        rbody.isKinematic = true;
+    }
+
+    /// <summary>
+    /// 重新复活
+    /// </summary>
+    public void Restart()
+    {
+        isStarted = true;
+        isDied = false;
+        gameObject.SetActive(true);
+        isGroundSetter.Set(true);
     }
 
     [Subscribe(Const.Event.Invinsible)]
@@ -262,7 +334,16 @@ public class PlayerControl : BaseNotificationBehaviour
 
     public void DelayDestroy()
     {
-        Destroy(gameObject);
+        isStarted = false;
+        isPushSetter.Set(false);
+        speedSetter.Set(0);
+        isSpeedUpSetter.Set(false);
+        gameObject.SetActive(false);
+        isGroundSetter.Set(true);
+        invinsibleTime = InvinsibleDuration;
+        GetComponent<CapsuleCollider2D>().enabled = true;
+        rbody.isKinematic = false;
+        transform.position = new Vector3(1.636f, 0, 0);
     }
 
 }

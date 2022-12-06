@@ -240,6 +240,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Speed: 4
   BulletPrefab: {fileID: 7502607835827804373, guid: 09b580a56c8e8415d94556fb5135a6de, type: 3}
+  BigBulletPrefab: {fileID: 5318576286550843231, guid: e02bc2ed99c6c4db79d4a5d7a34b6317, type: 3}
   ShootInterval: 0.2
 --- !u!251 &1867677513
 PlatformEffector2D:

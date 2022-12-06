@@ -12,6 +12,11 @@ public class BossObject : BaseNotificationBehaviour
     public GameObject EnemyPrefab;
 
     /// <summary>
+    /// 显示boss的扣血动画
+    /// </summary>
+    public GameObject ShowHitBossHPPrefab;
+
+    /// <summary>
     /// 最小重力加速度
     /// </summary>
     public int MinForce = 100;
@@ -175,6 +180,14 @@ public class BossObject : BaseNotificationBehaviour
             isGround = false;
             isGroundSetter.Set(false);
         }
+    }
+
+    [Subscribe(Const.Event.BossAttacked)]
+    public void OnHitBoss(MessagePayload<int> payload)
+    {
+        GameObject showHitBossHp = Instantiate(ShowHitBossHPPrefab);
+        showHitBossHp.transform.SetParent(GameObject.Find("UIMananger").transform.Find("Canvas"));
+        showHitBossHp.GetComponent<HitBossHP>().Init(payload.data);
     }
 
 }

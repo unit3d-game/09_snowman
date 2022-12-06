@@ -7,7 +7,14 @@ using MyUtils;
  * 2、人物站在雪球上时，是可以推动和攻击的，攻击（按K）的话会使其拥有 6 的速度向前方快速滚动
  * 3、雪球可以推动人物运动（人物进入无敌状态），如果此时跳跃（按J）就会脱离跟随状态，人物同时进入无敌状态
  * 4、碰到Wall和BOSS则消失
- * 5、HP是1、2的时候，人物是碰触不道德
+ * 5、HP是1、2的时候，人物是碰触不到的
+ * 
+ * 药水的逻辑：
+ * 1、蓝色: 增加子弹效果，效果增加一倍
+ * 2、绿色：玩家进入无敌状态
+ * 3、红色：玩家速度提升一倍
+ * 4、黄色:延长子弹飞行时间，增加50%
+ * 
  */
 public class BallObject : MonoBehaviour
 {
@@ -16,7 +23,12 @@ public class BallObject : MonoBehaviour
      * <summary>每个hp衰减的时长，默认5秒</summary>
      * 
      */
-    public float HpDuration = 5;
+    public float HpDuration = 10;
+
+    /// <summary>
+    /// 药水
+    /// </summary>
+    public GameObject[] Waters;
 
     /**
      * <summary></summary>
@@ -50,6 +62,8 @@ public class BallObject : MonoBehaviour
     private Transform playerFoot;
 
     private PlatformEffector2D platformEffector2D;
+
+
 
 
     private bool isDestroyed = false;
@@ -102,7 +116,7 @@ public class BallObject : MonoBehaviour
             GameObject enemy = Instantiate(babyEnemyPrefab, transform.position, transform.rotation, transform.parent);
 
             isDestroyed = true;
-
+            Debug.Log($"Clear ball game object from birth enemy");
             // 销毁当前雪球
             Destroy(gameObject);
         }
@@ -114,8 +128,6 @@ public class BallObject : MonoBehaviour
     {
         return hp == MAX_HP;
     }
-
-
 
     /**
      * <summary>开始推着走</summary>
@@ -223,21 +235,44 @@ public class BallObject : MonoBehaviour
         }
         SnowUtils.DoCollision(transform.position, -transform.localScale, 0.2f, collider =>
         {
+            Debug.Log($"Clear ball game object from enemy");
             // 如果碰撞到了，则直接销毁
             BabyEnemyObject baby = collider.gameObject.GetComponent<BabyEnemyObject>();
             baby.DoDeath();
-            isDestroyed = true;
-            Destroy(gameObject);
         }, Const.Layer.Enemy);
 
+    }
+    /// <summary>
+    /// 滚动球碰撞检测
+    /// </summary>
+    /// <param name="collision"></param>
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == Const.Tag.Ball)
+        {
+            BallObject ballObject = collision.gameObject.GetComponent<BallObject>();
+            if (!ballObject.isRolling)
+            {
+                return;
+            }
+            // 碰到其他雪球来点装备, 30%几率出状态
+            if (RandomUtils.isWithinRatioOfPrecent(30))
+            {
+                Optional<GameObject> water = RandomUtils.GetOneUnityObject(Waters);
+                if (water.IsPresent())
+                {
+                    Instantiate(water.Get(), transform.position, transform.rotation);
+                }
+            }
+            Destroy(gameObject);
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == Const.Tag.Ball)
+        // 如果是最下面的左右侧，则消失
+        if (collision.gameObject.tag == Const.Tag.Ground && collision.gameObject.name.Contains("Dead"))
         {
-            // 碰到其他雪球 80 分
-            PostNotification.Post<int>(Const.Event.IncrementScore, this, 80);
             Destroy(gameObject);
         }
     }

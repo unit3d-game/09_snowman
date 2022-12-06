@@ -15,6 +15,14 @@ public class PointObject : MonoBehaviour
     private float startTime;
 
 
+    private SpriteRenderer spriteRenderer;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -31,6 +39,10 @@ public class PointObject : MonoBehaviour
         else
         {
             transform.position += Vector3.up * Time.deltaTime;
+            Color color = spriteRenderer.color;
+            color.a = (ShowDuration - Time.time + startTime) / ShowDuration;
+            spriteRenderer.color = color;
         }
     }
+
 }

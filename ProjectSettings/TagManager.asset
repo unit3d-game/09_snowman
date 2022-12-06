@@ -10,6 +10,7 @@ TagManager:
   - Enemy
   - Bullet
   - Sweet
+  - Water
   layers:
   - Default
   - TransparentFX

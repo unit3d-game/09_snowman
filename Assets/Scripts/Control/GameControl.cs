@@ -5,19 +5,16 @@ using MyUtils;
 public class GameControl : BaseNotificationBehaviour
 {
 
-    /// <summary>
-    /// 主角预制体
-    /// </summary>
-    public GameObject PlayerPrefab;
-
-
     private Transform playerPoint;
 
+    private PlayerControl player;
 
 
-    void Start()
+    public override void Awake()
     {
-        createPlayer();
+        base.Awake();
+        player = GameObject.Find(Const.ObjectName.Player).GetComponent<PlayerControl>();
+        playerPoint = player.transform.Find("Point");
     }
 
     [Subscribe(Const.Event.IncrementScore)]
@@ -31,14 +28,7 @@ public class GameControl : BaseNotificationBehaviour
     [Subscribe(Const.Event.PlayerRestart)]
     public void OnPlayerRestart()
     {
-        createPlayer();
-    }
-
-    private void createPlayer()
-    {
-        GameObject p = Instantiate(PlayerPrefab, new Vector3(1.63f, -3.64f, 0), Quaternion.identity, transform.parent);
-        p.name = Const.ObjectName.Player;
-        playerPoint = p.transform.Find("Point");
+        player.Restart();
     }
 }
 

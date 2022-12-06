@@ -11,6 +11,7 @@ public class BabyEnemyObject : BaseNotificationBehaviour
      */
     public GameObject BallPrefab;
 
+
     /**
      * <summary>速度</summary>
      */
@@ -21,12 +22,21 @@ public class BabyEnemyObject : BaseNotificationBehaviour
     /// </summary>
     public GameObject SweetPrefab;
 
+    /// <summary>
+    /// 显示血量
+    /// </summary>
+    public GameObject ShowHpPrefab;
+
+
+    private int hp = 5;
+
     // 移动动画设置
     private AnimSetter<bool> isMoveSetter;
     // 是否脚踏实地
     private AnimSetter<bool> isGroundSetter;
     // 速度动画设置
     private AnimSetter<float> speedSetter;
+
 
     private Transform footPosition;
 
@@ -37,6 +47,10 @@ public class BabyEnemyObject : BaseNotificationBehaviour
 
     private AiWalkObject aiWalkObject;
 
+    private EnemyHPObject showHpO;
+
+    private BossObject boss;
+
 
     public override void Awake()
     {
@@ -44,21 +58,35 @@ public class BabyEnemyObject : BaseNotificationBehaviour
         Animator animator = GetComponent<Animator>();
         aiWalkObject = GetComponent<AiWalkObject>();
         rbody = GetComponent<Rigidbody2D>();
+        boss = GameObject.Find(Const.ObjectName.Boss).GetComponent<BossObject>();
         isMoveSetter = new AnimSetter<bool>(animator, "Move");
         isGroundSetter = new AnimSetter<bool>(animator, "IsGround");
         speedSetter = new AnimSetter<float>(animator, "Speed");
         footPosition = transform.Find("Foot");
+        showHpO = Instantiate(ShowHpPrefab).GetComponent<EnemyHPObject>();
+        showHpO.gameObject.transform.SetParent(GameObject.Find("UIMananger").transform.Find("Canvas"));
+        showHpO.Init(this.hp, gameObject);
     }
 
     public void DoStart(float mspeed)
     {
         Speed = mspeed;
+        restHP();
     }
 
     public void DoStart(int force, float mspeed)
     {
         Speed = mspeed;
         rbody.AddForce(new Vector2(-1, UnityEngine.Random.Range(0, 1f)) * force);
+        restHP();
+    }
+
+    private void restHP()
+    {
+        // 根据 speed 生成 血条
+        this.hp -= (int)((this.Speed - boss.MinSpeed) / (boss.MaxSpeed - boss.MinSpeed) * this.hp);
+        this.showHpO.UpdateHp(this.hp);
+
     }
 
     private void Update()
@@ -69,7 +97,7 @@ public class BabyEnemyObject : BaseNotificationBehaviour
 
     private void setGround()
     {
-        isGround = SnowUtils.IsCollision(footPosition, 0.1f, Const.Layer.Stair, Const.Layer.Floor);
+        isGround = SnowUtils.IsCollision(footPosition, 0.25f, Const.Layer.Stair, Const.Layer.Floor);
     }
 
     private void toWalk()
@@ -113,13 +141,13 @@ public class BabyEnemyObject : BaseNotificationBehaviour
     {
         // 开始
         Instantiate(SweetPrefab, transform.position, transform.rotation, transform.parent);
-        Destroy(gameObject);
+        DestroySelf();
     }
 
     private void toBall()
     {
         Instantiate(BallPrefab, transform.position, transform.rotation, transform.parent);
-        Destroy(gameObject);
+        DestroySelf();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -127,27 +155,31 @@ public class BabyEnemyObject : BaseNotificationBehaviour
         // 如果碰到子弹，则变成雪球
         if (collision.tag == Const.Tag.Bullet)
         {
-            toBall();
+            BulletObject bullet = collision.gameObject.GetComponent<BulletObject>();
+            hp -= bullet.AttackPower;
+            showHpO.UpdateHp(hp);
+            if (hp <= 0)
+            {
+                toBall();
+            }
         }
     }
 
+    private void DestroySelf()
+    {
+        showHpO.DestroySelf();
+        Destroy(gameObject);
+    }
 
 
-    //private void OnCollisionEnter2D(Collision2D collision)
-    //{
-    //    if (collision.gameObject.tag == Const.Tag.Ball)
-    //    {
-    //        // 检查是否是 rolling 状态
-    //        BallObject ball = collision.gameObject.GetComponent<BallObject>();
-    //        if (!ball.isRolling)
-    //        {
-    //            return;
-    //        }
-    //        // 开始
-    //        Instantiate(SweetPrefab, transform.position, transform.rotation, transform.parent);
-    //        Destroy(gameObject);
-    //    }
-    //}
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // 如果是最下面的左右侧，则消失
+        if (collision.gameObject.tag == Const.Tag.Ground && collision.gameObject.name.Contains("Dead"))
+        {
+            DestroySelf();
+        }
+    }
 
 }
 

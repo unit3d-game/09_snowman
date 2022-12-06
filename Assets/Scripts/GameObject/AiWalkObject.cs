@@ -13,7 +13,7 @@ public class AiWalkObject : MonoBehaviour
     private float speed;
 
     // 方向, true 左边挪动，false 右侧挪动 
-    private bool direct;
+    public bool Direct { private set; get; } = false;
 
     // 是否在移动中
     public bool IsMoving { private set; get; } = false;
@@ -24,7 +24,7 @@ public class AiWalkObject : MonoBehaviour
     public void DoStart(float speed, bool direct)
     {
         this.speed = speed;
-        this.direct = direct;
+        this.Direct = direct;
         this.IsMoving = true;
     }
 
@@ -42,7 +42,7 @@ public class AiWalkObject : MonoBehaviour
     private void doMove()
     {
         Vector3 pos = transform.position;
-        if (this.direct)
+        if (this.Direct)
         {
             pos.x -= this.speed * Time.deltaTime;
         }
@@ -66,9 +66,9 @@ public class AiWalkObject : MonoBehaviour
         if (collision.gameObject.name == "LeftWall" || collision.gameObject.name == "RightWall")
         {
             // 切换方向
-            this.direct = !this.direct;
+            this.Direct = !this.Direct;
             // 左侧
-            if (this.direct)
+            if (this.Direct)
             {
                 transform.localScale = new Vector3(1, 1, 1);
             }
@@ -76,12 +76,6 @@ public class AiWalkObject : MonoBehaviour
             {
                 transform.localScale = new Vector3(-1, 1, 1);
             }
-        }
-
-        // 如果是最下面的左右侧，则消失
-        if (collision.gameObject.tag == Const.Tag.Ground && collision.gameObject.name.Contains("Dead"))
-        {
-            Destroy(gameObject);
         }
     }
 

@@ -10,7 +10,12 @@ public class BulletObject : MonoBehaviour
      * <summary>最大射程</summary>
      * 
      */
-    public float MaxDistance = 1;
+    private float maxDistance = 1;
+
+    /// <summary>
+    /// 子弹攻击力
+    /// </summary>
+    public int AttackPower = 1;
 
     private Transform firePoint;
 
@@ -25,13 +30,13 @@ public class BulletObject : MonoBehaviour
     private float currentDistance = 0;
 
 
-
-
     private void Awake()
     {
         rbody = GetComponent<Rigidbody2D>();
         GameObject player = GameObject.Find(Const.ObjectName.Player);
-        speed = player.GetComponent<BulletControl>().Speed;
+        BulletControl bullet = player.GetComponent<BulletControl>();
+        speed = bullet.Speed;
+        maxDistance = bullet.MaxDistance;
         firePoint = player.transform.Find("FirePoint");
         isLeft = player.transform.localScale.x > 0;
         Debug.Log($"bullet dir is {isLeft}");
@@ -64,13 +69,15 @@ public class BulletObject : MonoBehaviour
     {
         float dis = speed * Time.deltaTime;
         currentDistance += dis;
-        if (currentDistance >= MaxDistance && rbody.isKinematic)
+        if (currentDistance >= maxDistance && rbody.isKinematic)
         {
             // 当大于最大距离时，开始受重力影响
             rbody.isKinematic = false;
         }
         return dis;
     }
+
+
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -83,7 +90,7 @@ public class BulletObject : MonoBehaviour
         // 如果是碰到 boss
         if (collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.Boss) || collision.gameObject.layer == LayerMask.NameToLayer(Const.Layer.BossDown))
         {
-            PostNotification.Post<int>(Const.Event.BossAttacked, this, ~10);
+            PostNotification.Post<int>(Const.Event.BossAttacked, this, AttackPower * 30);
             PostNotification.Post<int>(Const.Event.IncrementScore, this, 10);
         }
         // 无论碰到谁，都销毁

@@ -2,6 +2,7 @@
 using System.Collections;
 using MyUtils;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class UIControl : BaseNotificationBehaviour
 {
@@ -37,7 +38,10 @@ public class UIControl : BaseNotificationBehaviour
         userData = new UserData();
         UserData ud = JSONUtils.Load<UserData>();
         MaxHp = userData.BossHP;
-        userData.HighScore = ud.HighScore;
+        if (ud != null)
+        {
+            userData.HighScore = ud.HighScore;
+        }
     }
     void Start()
     {
@@ -76,8 +80,9 @@ public class UIControl : BaseNotificationBehaviour
     [Subscribe(Const.Event.PlayerDied)]
     public void PlayerDied()
     {
-        if (userData.LifeNum == 0)
+        if (userData.LifeNum == 1)
         {
+            SceneManager.LoadScene("GameOver");
             return;
         }
         userData.LifeNum -= 1;

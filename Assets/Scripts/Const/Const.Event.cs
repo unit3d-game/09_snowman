@@ -27,6 +27,12 @@ public partial class Const
 
         //重新复活
         public const string PlayerRestart = "PlayerRestart";
+
+        //喝药水事件
+        public const string DrinkWater = "DrinkWater";
+
+        // 清除角色效果
+        public const string ClearPlayerEffect = "ClearPlayerEffect";
     }
 }
 
