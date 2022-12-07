@@ -158,6 +158,7 @@ public class BabyEnemyObject : BaseNotificationBehaviour
             BulletObject bullet = collision.gameObject.GetComponent<BulletObject>();
             hp -= bullet.AttackPower;
             showHpO.UpdateHp(hp);
+            PostNotification.Post<int>(Const.Event.IncrementScore, this, bullet.AttackPower * 10);
             if (hp <= 0)
             {
                 toBall();

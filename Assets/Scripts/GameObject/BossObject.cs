@@ -73,9 +73,14 @@ public class BossObject : BaseNotificationBehaviour
      */
     private float nextJumpTime;
 
+    // 显示击中时间
+    private float showHitedTime;
+
 
     private Rigidbody2D rbody;
 
+
+    private SpriteRenderer spriteRenderer;
 
     public override void Awake()
     {
@@ -89,6 +94,7 @@ public class BossObject : BaseNotificationBehaviour
         isGroundSetter = new AnimSetter<bool>(animator, "IsGround");
         isJumpTrigger = new AnimTrigger(animator, "Jump");
         isBigJumpTrigger = new AnimTrigger(animator, "BigJump");
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -101,6 +107,31 @@ public class BossObject : BaseNotificationBehaviour
         }
         setGround();
         createEnemy();
+        showHitedAnimation();
+    }
+
+
+    private void showHitedAnimation()
+    {
+        if (showHitedTime <= 0)
+        {
+            return;
+        }
+        // 动画闪耀
+        showHitedTime -= Time.deltaTime;
+        if (showHitedTime <= 0)
+        {
+            showHitedTime = 0;
+            // 重置
+            spriteRenderer.color = Color.white;
+        }
+        else
+        {
+            int rin = (int)(showHitedTime * 10) % Const.Common.RandomColors.Length;
+            spriteRenderer.color = Const.Common.RandomColors[rin];
+            Debug.Log($"Color is {rin}");
+        }
+
     }
 
     private void setGround()
@@ -185,6 +216,7 @@ public class BossObject : BaseNotificationBehaviour
     [Subscribe(Const.Event.BossAttacked)]
     public void OnHitBoss(MessagePayload<int> payload)
     {
+        showHitedTime = 0.6f;
         GameObject showHitBossHp = Instantiate(ShowHitBossHPPrefab);
         showHitBossHp.transform.SetParent(GameObject.Find("UIMananger").transform.Find("Canvas"));
         showHitBossHp.GetComponent<HitBossHP>().Init(payload.data);

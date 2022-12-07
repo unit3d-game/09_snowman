@@ -8,7 +8,7 @@ using UnityEngine;
 public class PlayerControl : BaseNotificationBehaviour
 {
 
-    private static readonly Color[] InvinsibleColors = ArrayUtils.As<Color>(Color.cyan, Color.blue, Color.red, Color.yellow, Color.white);
+    public static readonly Color[] InvinsibleColors = Const.Common.RandomColors;
 
     /**
      * <summary>无敌维持时间，默认3s</summary>
